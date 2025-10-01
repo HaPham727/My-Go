@@ -1,8 +1,5 @@
 # ⚫⚪️My-Go 
-A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in the C++ language.
-
-> [!NOTE]
-> This project is rendered using the [raylib](https://github.com/raysan5/raylib) C++.
+A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in the C++ language. This project is rendered using the [raylib](https://github.com/raysan5/raylib) C++ library.
 
 # 💻Features
 - Can render the 19x19 Go/Weiqi/Baduk/Cờ Vây board.
