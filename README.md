@@ -6,6 +6,6 @@ A WIP, light-weight game simulator for Weiqi (Go/Baduk/Cờ Vây) programmed in 
 
 # 💻Features
 - Can render the 19x19 Weiqi/Go/Baduk/Cờ Vây board.
-- Use MOUSE_BUTTON_LEFT to place Black and White pieces in alternating order.
+- Detects MOUSE_BUTTON_LEFT to place Black and White pieces in alternating order.
 
 Last updated: 01/10/2025
