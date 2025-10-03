@@ -2,9 +2,9 @@
 
 int main()
 {
-	Board playboard;
+	Board playBoard;
 
-	playboard.loopGame();
+	playBoard.loopGame();
 
 	return 0;
 }

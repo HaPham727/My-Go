@@ -1,6 +1,6 @@
 #include "Header.h"
 
-Board::Board() //Constructor for "Board"-class objects to initialize the board-recording 2D array 
+Board::Board() //Initialize the board-recording 2D array 
 {
 	for (int i{}; i <= HALF_OF_SQUARES * 2; ++i)
 	{
@@ -26,18 +26,18 @@ void Board::printBoard() //Print board to console
 	std::cout << '\n';
 }
 
-void Board::searchAndRemoveDeadGroup(int& i, int& j, std::vector<std::vector<int>>& checked_pos, std::vector<std::pair<int, int>>& pieces_in_group)
+void Board::searchAndRemoveDeadGroup(int& i, int& j, std::vector<std::vector<int>>& checked_pos, std::vector<std::pair<int, int>>& piecesInGroup) //Use BFS from coords i & j to check if group is dead, and destroy, if so
 {
 	std::queue<std::pair<int, int>> q;
 	q.push({ i, j });
 
-	pieces_in_group.push_back({ i, j });
-
 	int liberty_count{ 0 };
+
+	piecesInGroup.push_back({ i, j });
 
 	while (!q.empty())
 	{
-		int queue_size = q.size();
+		int queue_size = static_cast<int>(q.size());
 
 		for (int k{}; k < queue_size; k++)
 		{
@@ -66,43 +66,36 @@ void Board::searchAndRemoveDeadGroup(int& i, int& j, std::vector<std::vector<int
 
 						q.push({ new_row, new_col });
 
-						pieces_in_group.push_back({ new_row, new_col });
+						piecesInGroup.push_back({ new_row, new_col });
 					}
 					//else if (this->m_board[new_row][new_col] == this->m_player * -1)
-					//	
+					//	Code for later
 				}
 			}
 		}
 	}
 
+	//Remove dead groups
 	if (liberty_count == 0)
 	{
 		std::cout << "The group of pieces starting from (" << i << ", " << j << ") is DEAD\n";
-		for (std::pair<int, int> p : pieces_in_group)
+		for (std::pair<int, int> p : piecesInGroup)
 		{
-			m_board[p.first][p.second] = 0;
-		}
-	}
-
-	//Clear the entirety of the visited-elements-tracker
-	for (int m{}; m < NUMBER_OF_SQUARES; ++m)
-	{
-		for (int n{}; n < NUMBER_OF_SQUARES; ++n)
-		{
-			checked_pos[m][n] *= 0;
+			this->m_board[p.first][p.second] = 0;
 		}
 	}
 }
 
-void Board::checkPlayedMoves(float& screen_width, float& screen_height)
+void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
 {
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 	{
 		Vector2 mousePos = GetMousePosition();
 
-		if (mousePos.x >= (screen_width - HALF_OF_SQUARES * 2 * SQUARE_SIZE - SQUARE_SIZE) / 2 &&
+		//Check for moves
+		if (mousePos.x > (screen_width - HALF_OF_SQUARES * 2 * SQUARE_SIZE - SQUARE_SIZE) / 2 &&
 			mousePos.x < (screen_width + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2 &&
-			mousePos.y >= (screen_height - HALF_OF_SQUARES * 2 * SQUARE_SIZE - SQUARE_SIZE) / 2 &&
+			mousePos.y > (screen_height - HALF_OF_SQUARES * 2 * SQUARE_SIZE - SQUARE_SIZE) / 2 &&
 			mousePos.y < (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2)
 		{
 			int row = std::round((mousePos.y - (screen_height - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
@@ -110,8 +103,8 @@ void Board::checkPlayedMoves(float& screen_width, float& screen_height)
 
 			if (m_board[row][col] == 0)
 			{
-				m_board[row][col] += m_player;
-				m_player *= -1;
+				this->m_board[row][col] += this->m_player;
+				this->m_player *= -1;
 
 				//Start of S&R section
 
@@ -125,10 +118,9 @@ void Board::checkPlayedMoves(float& screen_width, float& screen_height)
 						{
 							checked_pos[i][j] = 2;
 
-							//This vector "pieces_in_group" is created every time a new (meaning unvisited, meaning checked_pos value = 0) group is found and (therefore) needs to get BFS'd
-							std::vector<std::pair<int, int>> pieces_in_group;
+							std::vector<std::pair<int, int>> piecesInGroup;
 
-							searchAndRemoveDeadGroup(i, j, checked_pos, pieces_in_group);
+							searchAndRemoveDeadGroup(i, j, checked_pos, piecesInGroup);
 						}
 					}
 				}
@@ -137,6 +129,15 @@ void Board::checkPlayedMoves(float& screen_width, float& screen_height)
 
 				this->printBoard();
 			}
+		}
+
+		//Check for passes
+		if (mousePos.x >= (screen_width - BUTTON_WIDTH) / 2 &&
+			mousePos.x < (screen_width + BUTTON_WIDTH) / 2 &&
+			mousePos.y >= (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2 &&
+			mousePos.y < (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE + BUTTON_HEIGHT * 2) / 2)
+		{
+			this->m_player *= -1;
 		}
 	}
 }
@@ -171,7 +172,21 @@ void Board::drawPieces(float& screen_width, float& screen_height)
 	}
 }
 
-void Board::playMove(const int& row, const int& col) //Debug tool (deprecated). Plays move via index (starts from 0)
+void Board::drawCurrentPlayer(float& screen_width, float& screen_height)
+{
+	if (m_player > 0)
+		DrawTextEx(GetFontDefault(), "Black to play", { (screen_width - TEXT_X_OFFSET) / 2, (screen_height - FEATURES_Y_OFFSET) / 2 }, TEXT_SIZE, FEATURES_SPACING, BLACK);
+	else 
+		DrawTextEx(GetFontDefault(), "White to play", { (screen_width - TEXT_X_OFFSET) / 2, (screen_height - FEATURES_Y_OFFSET) / 2 }, TEXT_SIZE, FEATURES_SPACING, WHITE);
+}
+
+void Board::drawPassButton(float& screen_width, float& screen_height)
+{
+	DrawRectangle((screen_width - BUTTON_WIDTH) / 2, (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2, BUTTON_WIDTH, BUTTON_HEIGHT, BROWN);
+	DrawTextEx(GetFontDefault(), "PASS", { (screen_width - BUTTON_X_OFFSET) / 2, (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + BUTTON_HEIGHT) / 2 }, TEXT_SIZE, FEATURES_SPACING, BEIGE);
+}
+
+void Board::playMove(const int& row, const int& col) //Debug tool (deprecated). Plays move via index 
 {
 	if (this->m_board[row][col] == 0)
 	{
@@ -180,27 +195,27 @@ void Board::playMove(const int& row, const int& col) //Debug tool (deprecated). 
 	}
 }
 
-void Board::renderGame() //Does all the drawing needed inside a raylib window loop (BeginDrawing, ClearBackGround, Game Loop, and EndDrawing)
+void Board::renderGame() //Does all the drawing inside a raylib window loop 
 {
-	//Constantly check for screen width & height for use in calculations
-	float screen_width = GetScreenWidth();
+	//Get screen width & height for calcs
+	float screen_width = static_cast<int>(GetScreenWidth());
 	float screen_height = GetScreenHeight();
 
-	//Start Drawing
+	//Start Draw
 	BeginDrawing();
-
-	//Clear the Background
 	ClearBackground(BEIGE);
 
 	//Update Board
-	checkPlayedMoves(screen_width, screen_height);
+	checkMovesOrPasses(screen_width, screen_height);
 
 	//Draw 
 	drawGrid(screen_width, screen_height);
 	drawPieces(screen_width, screen_height);
+	drawCurrentPlayer(screen_width, screen_height);
+	drawPassButton(screen_width, screen_height);
 	DrawFPS(0, 0);
 
-	//End Drawing
+	//End Draw
 	EndDrawing();
 }
 
