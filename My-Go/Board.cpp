@@ -26,66 +26,6 @@ void Board::printBoard() //Print board to console
 	std::cout << '\n';
 }
 
-void Board::searchAndRemoveDeadGroup(int& i, int& j, std::vector<std::vector<int>>& checked_pos, std::vector<std::pair<int, int>>& piecesInGroup) //Use BFS from coords i & j to check if group is dead, and destroy, if so
-{
-	std::queue<std::pair<int, int>> q;
-	q.push({ i, j });
-
-	int liberty_count{ 0 };
-
-	piecesInGroup.push_back({ i, j });
-
-	while (!q.empty())
-	{
-		int queue_size = static_cast<int>(q.size());
-
-		for (int k{}; k < queue_size; k++)
-		{
-			auto [row, col] = q.front();
-
-			q.pop();
-
-			for (auto& l : DIRECTIONS)
-			{
-				int new_row = row + l[0];
-				int new_col = col + l[1];
-
-				if (new_row >= 0 &&
-					new_col >= 0 &&
-					new_row < NUMBER_OF_SQUARES &&
-					new_col < NUMBER_OF_SQUARES &&
-					checked_pos[new_row][new_col] == 0)
-				{
-					if (this->m_board[new_row][new_col] == 0)
-					{
-						++liberty_count;
-					}
-					else if (this->m_board[new_row][new_col] == this->m_board[i][j])
-					{
-						checked_pos[new_row][new_col] = 2;
-
-						q.push({ new_row, new_col });
-
-						piecesInGroup.push_back({ new_row, new_col });
-					}
-					//else if (this->m_board[new_row][new_col] == this->m_player * -1)
-					//	Code for later
-				}
-			}
-		}
-	}
-
-	//Remove dead groups
-	if (liberty_count == 0)
-	{
-		std::cout << "The group of pieces starting from (" << i << ", " << j << ") is DEAD\n";
-		for (std::pair<int, int> p : piecesInGroup)
-		{
-			this->m_board[p.first][p.second] = 0;
-		}
-	}
-}
-
 void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
 {
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
@@ -98,34 +38,171 @@ void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
 			mousePos.y > (screen_height - HALF_OF_SQUARES * 2 * SQUARE_SIZE - SQUARE_SIZE) / 2 &&
 			mousePos.y < (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2)
 		{
-			int row = std::round((mousePos.y - (screen_height - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
-			int col = std::round((mousePos.x - (screen_width - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
+			int playedRow = std::round((mousePos.y - (screen_height - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
+			int playedCol = std::round((mousePos.x - (screen_width - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
 
-			if (m_board[row][col] == 0)
+			if (m_board[playedRow][playedCol] == 0)
 			{
-				this->m_board[row][col] += this->m_player;
+				this->m_board[playedRow][playedCol] += this->m_player;
 				this->m_player *= -1;
+				
+				std::vector<std::vector<int>> timesChecked(NUMBER_OF_SQUARES, std::vector<int>(NUMBER_OF_SQUARES, 0));
 
-				//Start of S&R section
+				bool playedPieceIsSafe{ false };
 
-				std::vector<std::vector<int>> checked_pos(NUMBER_OF_SQUARES, std::vector<int>(NUMBER_OF_SQUARES, 0));
-
-				for (int i{}; i < NUMBER_OF_SQUARES; ++i)
+				//Search & Remove dead pieces for the player who did NOT play the last move				
+				for (int i{0}; i <= 4; ++i)
 				{
-					for (int j{}; j < NUMBER_OF_SQUARES; ++j)
+					int row = playedRow + DIRECTIONS[i][0];
+					int col = playedCol + DIRECTIONS[i][1];
+
+					if (row >= 0 &&
+						col >= 0 &&
+						row < NUMBER_OF_SQUARES &&
+						col < NUMBER_OF_SQUARES &&
+						timesChecked[row][col] <= 4 &&
+						m_board[row][col] == m_player)
 					{
-						if (this->m_board[i][j] != 0 && checked_pos[i][j] == 0)
+						bool hasLiberty{ false };
+
+						++timesChecked[row][col];
+
+						std::vector<std::pair<int, int>> piecesInGroup;
+						piecesInGroup.push_back({ row, col });
+
+						std::queue<std::pair<int, int>> toBeSearched;
+						toBeSearched.push({ row, col });
+
+						while (!toBeSearched.empty())
 						{
-							checked_pos[i][j] = 2;
+							int queue_size = static_cast<int>(toBeSearched.size());
 
-							std::vector<std::pair<int, int>> piecesInGroup;
+							for (int j{0}; j < queue_size; ++j)
+							{
+								auto& [rowNew, colNew] = toBeSearched.front();
 
-							searchAndRemoveDeadGroup(i, j, checked_pos, piecesInGroup);
+								toBeSearched.pop();
+
+								for (int k{0}; k < 4; ++k)
+								{
+									int rowBFS = rowNew + DIRECTIONS[k][0];
+									int colBFS = colNew + DIRECTIONS[k][1];
+
+									if (rowBFS >= 0 &&
+										colBFS >= 0 &&
+										rowBFS < NUMBER_OF_SQUARES &&
+										colBFS < NUMBER_OF_SQUARES)
+									{
+										if (this->m_board[rowBFS][colBFS] == 0)
+										{
+											hasLiberty = true;
+										}
+										else if (this->m_board[rowBFS][colBFS] == this->m_board[row][col] && timesChecked[rowBFS][colBFS] <= 4)
+										{
+											++timesChecked[rowBFS][colBFS];
+
+											piecesInGroup.push_back({ rowBFS, colBFS });
+
+											toBeSearched.push({ rowBFS, colBFS });
+										}
+									}
+								}
+							}
+						}
+
+						//Remove dead groups
+						if (!hasLiberty)
+						{
+							std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n";
+							for (auto const& coords : piecesInGroup)
+							{
+								this->m_board[coords.first][coords.second] = 0;
+							}
+							playedPieceIsSafe = true;
 						}
 					}
 				}
 
-				//End of S&R section
+				//Search & Remove dead pieces for the player who DID play the last move				
+				if (!playedPieceIsSafe)
+				{
+					for (int i{ 0 }; i < std::ssize(DIRECTIONS); ++i)
+					{
+						int row = playedRow + DIRECTIONS[i][0];
+						int col = playedCol + DIRECTIONS[i][1];
+
+						if (row >= 0 &&
+							col >= 0 &&
+							row < NUMBER_OF_SQUARES &&
+							col < NUMBER_OF_SQUARES &&
+							timesChecked[row][col] <= 4 &&
+							m_board[row][col] == m_player * (-1))
+						{
+							bool hasLiberty{ false };
+
+							++timesChecked[row][col];
+
+							std::vector<std::pair<int, int>> piecesInGroup;
+							piecesInGroup.push_back({ row, col });
+
+							std::queue<std::pair<int, int>> toBeSearched;
+							toBeSearched.push({ row, col });
+
+							while (!toBeSearched.empty())
+							{
+								for (int j{ 0 }; j < std::ssize(toBeSearched); ++j)
+								{
+									auto [rowNew, colNew] = toBeSearched.front();
+
+									toBeSearched.pop();
+
+									for (int k{ 0 }; k < std::ssize(DIRECTIONS) - 1; ++k)
+									{
+										int rowBFS = rowNew + DIRECTIONS[k][0];
+										int colBFS = colNew + DIRECTIONS[k][1];
+
+										if (rowBFS >= 0 &&
+											colBFS >= 0 &&
+											rowBFS < NUMBER_OF_SQUARES &&
+											colBFS < NUMBER_OF_SQUARES)
+										{
+											if (this->m_board[rowBFS][colBFS] == 0)
+											{
+												hasLiberty = true;
+											}
+											else if (this->m_board[rowBFS][colBFS] == this->m_board[row][col] && timesChecked[rowBFS][colBFS] <= 4)
+											{
+												++timesChecked[rowBFS][colBFS];
+
+												piecesInGroup.push_back({ rowBFS, colBFS });
+
+												toBeSearched.push({ rowBFS, colBFS });
+											}
+										}
+									}
+								}
+							}
+
+							//Check for & reverse illegal moves
+							if (!hasLiberty && this->m_board[playedRow][playedCol] == m_player * (-1))
+							{
+								m_board[playedRow][playedCol] = 0;
+								m_player *= -1;
+							}
+
+							//Destroy dead groups
+							else if (!hasLiberty) 
+							{
+								std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n";
+								for (auto const& coords : piecesInGroup)
+								{
+									this->m_board[coords.first][coords.second] = 0;
+								}
+							}
+						}
+					}
+
+				}
 
 				this->printBoard();
 			}
@@ -233,3 +310,5 @@ void Board::loopGame() //Contains the entire game loop
 
 	CloseWindow();
 }
+
+
