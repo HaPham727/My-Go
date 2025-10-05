@@ -8,4 +8,4 @@ A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in th
 - Automatically detects and removes dead/surrounded groups of pieces from the board.
 
 
-Last updated: 01/10/2025
+Last updated: 04/10/2025
