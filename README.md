@@ -9,4 +9,4 @@ A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in th
 ##
 
 
-Last updated: 04/10/2025
+Last updated: 06/10/2025
