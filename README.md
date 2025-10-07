@@ -9,3 +9,4 @@ A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in th
 ## ✨Plans
 - Add scoring (most likely under Chinese rules).
 - Add app icon.
+- Add the little dots in certain intersections at certain sizes.
