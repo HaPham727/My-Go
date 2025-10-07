@@ -6,7 +6,6 @@ A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in th
 - Detects MOUSE_BUTTON_LEFT to place Black and White pieces in alternating order.
 - Automatically detects and removes dead/surrounded groups of pieces from the board.
 
-##
-
-
-Last updated: 06/10/2025
+## ✨Plans
+- Add scoring (most likely under Chinese rules).
+- Add app icon.
