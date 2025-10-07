@@ -1,5 +1,8 @@
 #include "Header.h"
 
+int screen_width = 1280; //Set default window width
+int screen_height = 960; //Set default window height
+
 Board::Board() //Initialize the board-recording 2D array 
 {
 	for (int i{}; i <= HALF_OF_SQUARES * 2; ++i)
@@ -26,7 +29,7 @@ void Board::printBoard() //Print board to console
 	std::cout << '\n';
 }
 
-void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
+void Board::checkMovesOrPasses()
 {
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 	{
@@ -38,8 +41,8 @@ void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
 			mousePos.y > (screen_height - HALF_OF_SQUARES * 2 * SQUARE_SIZE - SQUARE_SIZE) / 2 &&
 			mousePos.y < (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2)
 		{
-			int playedRow = std::round((mousePos.y - (screen_height - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
-			int playedCol = std::round((mousePos.x - (screen_width - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
+			int playedRow = std::round((mousePos.y - (static_cast<float>(screen_height) - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
+			int playedCol = std::round((mousePos.x - (static_cast<float>(screen_width) - HALF_OF_SQUARES * 2 * SQUARE_SIZE) / 2) / SQUARE_SIZE);
 
 			if (m_board[playedRow][playedCol] == 0)
 			{
@@ -50,7 +53,7 @@ void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
 
 				bool playedPieceIsSafe{ false };
 
-				//Search & Remove dead pieces for the player who did NOT play the last move				
+				//Search & Remove dead pieces (if any) for the player who did NOT play the last move				
 				for (int i{0}; i <= 4; ++i)
 				{
 					int row = playedRow + DIRECTIONS[i][0];
@@ -113,7 +116,7 @@ void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
 						//Remove dead groups
 						if (!hasLiberty)
 						{
-							std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n";
+							std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n" << '\n';
 							for (auto const& coords : piecesInGroup)
 							{
 								this->m_board[coords.first][coords.second] = 0;
@@ -191,7 +194,7 @@ void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
 							}
 
 							//Destroy dead groups
-							else if (!hasLiberty) 
+							else if (!hasLiberty)
 							{
 								std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n";
 								for (auto const& coords : piecesInGroup)
@@ -201,34 +204,36 @@ void Board::checkMovesOrPasses(float& screen_width, float& screen_height)
 							}
 						}
 					}
-
 				}
+
+				this->m_passes = 0;
 
 				this->printBoard();
 			}
 		}
 
 		//Check for passes
-		if (mousePos.x >= (screen_width - BUTTON_WIDTH) / 2 &&
-			mousePos.x < (screen_width + BUTTON_WIDTH) / 2 &&
-			mousePos.y >= (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2 &&
-			mousePos.y < (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE + BUTTON_HEIGHT * 2) / 2)
+		else if (mousePos.x >= (screen_width - BUTTON_WIDTH) / 2 &&
+				 mousePos.x < (screen_width + BUTTON_WIDTH) / 2 &&
+				 mousePos.y >= (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2 &&
+				 mousePos.y < (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE + BUTTON_HEIGHT * 2) / 2)
 		{
-			this->m_player *= -1;
+				this->m_player *= -1;
+				++this->m_passes;
 		}
 	}
 }
 
-void Board::drawGrid(float& screen_width, float& screen_height)
+void Board::drawGrid()
 {
 	for (int i{ -HALF_OF_SQUARES }; i <= HALF_OF_SQUARES; i += 1)
 	{
-		DrawLineEx({ screen_width / 2 + i * SQUARE_SIZE, screen_height / 2 + HALF_OF_SQUARES * SQUARE_SIZE }, { screen_width / 2 + i * SQUARE_SIZE,  screen_height / 2 - HALF_OF_SQUARES * SQUARE_SIZE }, 3.0, BLACK);
-		DrawLineEx({ screen_width / 2 + HALF_OF_SQUARES * SQUARE_SIZE, screen_height / 2 + i * SQUARE_SIZE }, { screen_width / 2 - HALF_OF_SQUARES * SQUARE_SIZE,  screen_height / 2 + i * SQUARE_SIZE }, 3.0, BLACK);
+		DrawLineEx({static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + HALF_OF_SQUARES * SQUARE_SIZE}, {static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 - HALF_OF_SQUARES * SQUARE_SIZE}, LINE_THICKNESS, BLACK);
+		DrawLineEx({static_cast<float>(screen_width) / 2 + HALF_OF_SQUARES * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE}, {static_cast<float>(screen_width) / 2 - HALF_OF_SQUARES * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE}, LINE_THICKNESS, BLACK);
 	}
 }
 
-void Board::drawPieces(float& screen_width, float& screen_height)
+void Board::drawPieces()
 {
 	for (int i{ -HALF_OF_SQUARES }; i <= HALF_OF_SQUARES; ++i)
 	{
@@ -237,10 +242,10 @@ void Board::drawPieces(float& screen_width, float& screen_height)
 			switch (this->m_board[i + HALF_OF_SQUARES][j + HALF_OF_SQUARES])
 			{
 			case 1:
-				DrawCircleV({ screen_width / 2 + j * SQUARE_SIZE, screen_height / 2 + i * SQUARE_SIZE }, PIECE_RADIUS, BLACK);
+				DrawCircleV({ static_cast<float>(screen_width) / 2 + j * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE }, PIECE_RADIUS, BLACK);
 				continue;
 			case -1:
-				DrawCircleV({ screen_width / 2 + j * SQUARE_SIZE, screen_height / 2 + i * SQUARE_SIZE }, PIECE_RADIUS, WHITE);
+				DrawCircleV({ static_cast<float>(screen_width) / 2 + j * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE }, PIECE_RADIUS, WHITE);
 				continue;
 			default:
 				continue;
@@ -249,47 +254,92 @@ void Board::drawPieces(float& screen_width, float& screen_height)
 	}
 }
 
-void Board::drawCurrentPlayer(float& screen_width, float& screen_height)
+void Board::drawCurrentPlayer()
 {
 	if (m_player > 0)
-		DrawTextEx(GetFontDefault(), "Black to play", { (screen_width - TEXT_X_OFFSET) / 2, (screen_height - FEATURES_Y_OFFSET) / 2 }, TEXT_SIZE, FEATURES_SPACING, BLACK);
+		DrawTextEx(GetFontDefault(), "Black to play", {(static_cast<float>(screen_width) - TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - FEATURES_Y_OFFSET) / 2}, BASE_TEXT_SIZE, FEATURES_SPACING, BLACK);
 	else 
-		DrawTextEx(GetFontDefault(), "White to play", { (screen_width - TEXT_X_OFFSET) / 2, (screen_height - FEATURES_Y_OFFSET) / 2 }, TEXT_SIZE, FEATURES_SPACING, WHITE);
+		DrawTextEx(GetFontDefault(), "White to play", {(static_cast<float>(screen_width) - TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - FEATURES_Y_OFFSET) / 2}, BASE_TEXT_SIZE, FEATURES_SPACING, WHITE);
 }
 
-void Board::drawPassButton(float& screen_width, float& screen_height)
+void Board::drawPassButton()
 {
 	DrawRectangle((screen_width - BUTTON_WIDTH) / 2, (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2, BUTTON_WIDTH, BUTTON_HEIGHT, BROWN);
-	DrawTextEx(GetFontDefault(), "PASS", { (screen_width - BUTTON_X_OFFSET) / 2, (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + BUTTON_HEIGHT) / 2 }, TEXT_SIZE, FEATURES_SPACING, BEIGE);
+	DrawTextEx(GetFontDefault(), "PASS", {(static_cast<float>(screen_width) - BUTTON_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE + BUTTON_TEXT_Y_OFFSET) / 2}, BASE_TEXT_SIZE, FEATURES_SPACING, BEIGE);
 }
 
-void Board::playMove(const int& row, const int& col) //Debug tool (deprecated). Plays move via index 
+void Board::checkPlayAgainOrExit()
 {
-	if (this->m_board[row][col] == 0)
+	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 	{
-		this->m_board[row][col] = m_player;
-		m_player *= -1;
+		Vector2 mousePos = GetMousePosition();
+
+		//Check for clicks on "Play Again"
+		if (mousePos.x > (static_cast<float>(screen_width) - PA_BUTTON_WIDTH) / 2 &&
+			mousePos.x < (static_cast<float>(screen_width) + PA_BUTTON_WIDTH) / 2 &&
+			mousePos.y > (static_cast<float>(screen_height) + PA_FEATURES_Y_OFFSET) / 2 &&
+			mousePos.y < (static_cast<float>(screen_height) + PA_FEATURES_Y_OFFSET + PA_BUTTON_HEIGHT * 2) / 2)
+		{
+			for (int i{}; i < NUMBER_OF_SQUARES; ++i)
+			{
+				for (int j{}; j < NUMBER_OF_SQUARES; ++j)
+				{
+					this->m_board[i][j] = 0;
+				}
+			}
+
+			this->m_passes = 0;
+		}
 	}
+}
+
+void Board::drawGameEndPopup()
+{
+	DrawRectangle((screen_width - PA_POPUP_WIDTH) / 2, (screen_height - PA_POPUP_HEIGHT) / 2, PA_POPUP_WIDTH, PA_POPUP_HEIGHT, BROWN);
+
+	DrawRectangle((screen_width - PA_BUTTON_WIDTH) / 2, (screen_height + PA_FEATURES_Y_OFFSET) / 2, PA_BUTTON_WIDTH, PA_BUTTON_HEIGHT, DARKBROWN);
+
+	DrawTextEx(GetFontDefault(), (this->m_score > 0) ? ("Black Wins") : ("White Wins"), {(static_cast<float>(screen_width) - PA_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - PA_FEATURES_Y_OFFSET - PA_BUTTON_HEIGHT) / 2}, BASE_TEXT_SIZE * 2, FEATURES_SPACING, BEIGE);
+
+	DrawTextEx(GetFontDefault(), "Play Again", {(static_cast<float>(screen_width) - PA_BUTTON_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) + PA_BUTTON_TEXT_Y_OFFSET) / 2}, BASE_TEXT_SIZE, FEATURES_SPACING, BEIGE);
 }
 
 void Board::renderGame() //Does all the drawing inside a raylib window loop 
 {
-	//Get screen width & height for calcs
-	float screen_width = static_cast<int>(GetScreenWidth());
-	float screen_height = GetScreenHeight();
+	//Update width & height if the user resize window
+	screen_width = GetScreenWidth();
+	screen_height = GetScreenHeight();
 
 	//Start Draw
 	BeginDrawing();
 	ClearBackground(BEIGE);
 
-	//Update Board
-	checkMovesOrPasses(screen_width, screen_height);
+	if (this->m_passes <= 1)
+	{
+		//Update Board
+		checkMovesOrPasses();
 
-	//Draw 
-	drawGrid(screen_width, screen_height);
-	drawPieces(screen_width, screen_height);
-	drawCurrentPlayer(screen_width, screen_height);
-	drawPassButton(screen_width, screen_height);
+		//Putting this if condition here to speed up the transition between Board and Play Again popup
+		if (this->m_passes == 2)
+			goto jump_point;
+
+		//Draw Board
+		drawGrid();
+		drawPieces();
+		drawCurrentPlayer();
+		drawPassButton();
+	}
+	else if (this->m_passes == 2)
+	{
+	jump_point:
+
+		//Update Popup
+		checkPlayAgainOrExit();
+
+		//Draw Play Again Popup
+		drawGameEndPopup();
+	}
+
 	DrawFPS(0, 0);
 
 	//End Draw
@@ -300,7 +350,7 @@ void Board::loopGame() //Contains the entire game loop
 {
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 
-	InitWindow(DEFAULT_SCREEN_WIDTH, DEFAULT_SCREEN_HEIGHT, "My-Go");
+	InitWindow(1280, 960, "My-Go");
 	SetTargetFPS(60);
 
 	while (!WindowShouldClose())
