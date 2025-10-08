@@ -14,7 +14,7 @@
 
 
 //Constant expressions (Set to liking)
-constexpr int  NUMBER_OF_SQUARES = 19; //Set board size (MUST BE ODD) (19x19 is standard for Go)
+constexpr int  NUMBER_OF_SQUARES = 9; //Set board size (MUST BE ODD) (19x19 is standard for Go)
 constexpr int SQUARE_SIZE = 40; //Set square size (Suggested: 40 for 19x19)
 constexpr float KOMI = 7.5; //Set komi (7.5 is standard under Chinese rules)
 
@@ -25,6 +25,7 @@ constexpr std::array<std::array<int, 2>, 5> DIRECTIONS = { { {1, 0}, {-1, 0}, {0
 
 constexpr int HALF_OF_SQUARES = NUMBER_OF_SQUARES / 2; //Half & round down for calculations
 constexpr int PIECE_RADIUS = SQUARE_SIZE * 9 / 20; //Calculate the piece radius for rendering
+constexpr int DOT_RADIUS = SQUARE_SIZE / 8; //Calculate the piece radius for rendering
 constexpr float LINE_THICKNESS = 3.0; //Thickness of lines on the board
 
 constexpr int FEATURES_Y_OFFSET = (NUMBER_OF_SQUARES + 2) * SQUARE_SIZE; //Y offset for player display text and pass button

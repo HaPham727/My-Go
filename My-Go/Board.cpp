@@ -1,7 +1,7 @@
 #include "Header.h"
 
-int screen_width = 1280; //Set default window width
-int screen_height = 960; //Set default window height
+int screen_width = 1280; //Default window width
+int screen_height = 960; //Default window height
 
 Board::Board() //Initialize the board-recording 2D array 
 {
@@ -226,10 +226,44 @@ void Board::checkMovesOrPasses()
 
 void Board::drawGrid()
 {
-	for (int i{ -HALF_OF_SQUARES }; i <= HALF_OF_SQUARES; i += 1)
+	for (int i{-HALF_OF_SQUARES}; i <= HALF_OF_SQUARES; i += 1)
 	{
 		DrawLineEx({static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + HALF_OF_SQUARES * SQUARE_SIZE}, {static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 - HALF_OF_SQUARES * SQUARE_SIZE}, LINE_THICKNESS, BLACK);
 		DrawLineEx({static_cast<float>(screen_width) / 2 + HALF_OF_SQUARES * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE}, {static_cast<float>(screen_width) / 2 - HALF_OF_SQUARES * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE}, LINE_THICKNESS, BLACK);
+	}
+
+	//Draw the dots
+	switch (NUMBER_OF_SQUARES)
+	{
+	case 19:
+		for (int i{-1}; i <= 1; ++i)
+		{
+			for (int j{-1}; j <= 1 ; ++j)
+			{
+				DrawCircleV({ static_cast<float>(screen_width) / 2 + j * 6 * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * 6 * SQUARE_SIZE }, DOT_RADIUS, BLACK);
+			}
+		}
+		return;
+	case 13:
+		for (int i{ -1 }; i <= 1; ++i)
+		{
+			for (int j{ -1 }; j <= 1; ++j)
+			{
+				DrawCircleV({ static_cast<float>(screen_width) / 2 + j * 3 * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * 3 * SQUARE_SIZE }, DOT_RADIUS, BLACK);
+			}
+		}
+		return;
+	case 9:
+		for (int i{ -1 }; i <= 1; i += 2)
+		{
+			for (int j{ -1 }; j <= 1; j += 2)
+			{
+				DrawCircleV({ static_cast<float>(screen_width) / 2 + j * 2 * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * 2 * SQUARE_SIZE }, DOT_RADIUS, BLACK);
+			}
+		}
+		return;
+	default:
+		return;
 	}
 }
 
@@ -319,7 +353,7 @@ void Board::renderGame() //Does all the drawing inside a raylib window loop
 		//Update Board
 		checkMovesOrPasses();
 
-		//Putting this if condition here to speed up the transition between Board and Play Again popup
+		//Putting this if condition here to speed up the transition between Board and Play Again popup after the 2nd Pass is pressed
 		if (this->m_passes == 2)
 			goto jump_point;
 
