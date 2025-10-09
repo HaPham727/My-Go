@@ -322,7 +322,10 @@ void Board::checkPlayAgainOrExit()
 				}
 			}
 
+			//Reset the player, score and pass counter
+			this->m_player = 1;
 			this->m_passes = 0;
+			this->m_score = {-KOMI};
 		}
 	}
 }
@@ -353,9 +356,12 @@ void Board::renderGame() //Does all the drawing inside a raylib window loop
 		//Update Board
 		checkMovesOrPasses();
 
-		//Putting this if condition here to speed up the transition between Board and Play Again popup after the 2nd Pass is pressed
+		//If condition to speed up transition between Board and Play Again popup after the 2nd continuous PASS is pressed
 		if (this->m_passes == 2)
+		{
+			//evaluateScore();
 			goto jump_point;
+		}
 
 		//Draw Board
 		drawGrid();

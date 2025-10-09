@@ -77,11 +77,11 @@ public:
 private:
 	std::array <std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> m_board;
 
-	int m_player{ 1 }; //Black is 1 and White is -1
+	int m_player{1}; //Black is 1 and White is -1
 
-	int m_passes{ 0 };
+	int m_passes{0}; //Counts how many passes since the last move was played. 2 continuous passes = game end
 
-	float m_score{ -KOMI }; //Positive scores = Black wins, Negative scores = White wins
+	float m_score{-KOMI}; //Positive scores = Black wins, Negative scores = White wins
 };
 
 #endif
