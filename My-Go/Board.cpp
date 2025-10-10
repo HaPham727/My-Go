@@ -53,6 +53,8 @@ void Board::checkMovesOrPasses()
 
 				bool playedPieceIsSafe{ false };
 
+				std::queue<std::pair<int, int>> toBeSearched;
+
 				//Search & Remove dead pieces (if any) for the player who did NOT play the last move				
 				for (int i{0}; i <= 4; ++i)
 				{
@@ -73,7 +75,6 @@ void Board::checkMovesOrPasses()
 						std::vector<std::pair<int, int>> piecesInGroup;
 						piecesInGroup.push_back({ row, col });
 
-						std::queue<std::pair<int, int>> toBeSearched;
 						toBeSearched.push({ row, col });
 
 						while (!toBeSearched.empty())
@@ -148,7 +149,6 @@ void Board::checkMovesOrPasses()
 							std::vector<std::pair<int, int>> piecesInGroup;
 							piecesInGroup.push_back({ row, col });
 
-							std::queue<std::pair<int, int>> toBeSearched;
 							toBeSearched.push({ row, col });
 
 							while (!toBeSearched.empty())
@@ -228,8 +228,8 @@ void Board::drawGrid()
 {
 	for (int i{-HALF_OF_SQUARES}; i <= HALF_OF_SQUARES; i += 1)
 	{
-		DrawLineEx({static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + HALF_OF_SQUARES * SQUARE_SIZE}, {static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 - HALF_OF_SQUARES * SQUARE_SIZE}, LINE_THICKNESS, BLACK);
-		DrawLineEx({static_cast<float>(screen_width) / 2 + HALF_OF_SQUARES * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE}, {static_cast<float>(screen_width) / 2 - HALF_OF_SQUARES * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE}, LINE_THICKNESS, BLACK);
+		DrawLineEx( {static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + HALF_OF_SQUARES * SQUARE_SIZE }, { static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 - HALF_OF_SQUARES * SQUARE_SIZE }, LINE_THICKNESS, BLACK);
+		DrawLineEx( {static_cast<float>(screen_width) / 2 + HALF_OF_SQUARES * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE }, { static_cast<float>(screen_width) / 2 - HALF_OF_SQUARES * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE }, LINE_THICKNESS, BLACK);
 	}
 
 	//Draw the dots
@@ -291,16 +291,44 @@ void Board::drawPieces()
 void Board::drawCurrentPlayer()
 {
 	if (m_player > 0)
-		DrawTextEx(GetFontDefault(), "Black to play", {(static_cast<float>(screen_width) - TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - FEATURES_Y_OFFSET) / 2}, BASE_TEXT_SIZE, FEATURES_SPACING, BLACK);
+		DrawTextEx(GetFontDefault(), "Black to play", { (static_cast<float>(screen_width) - TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - FEATURES_Y_OFFSET) / 2 }, BASE_TEXT_SIZE, FEATURES_SPACING, BLACK);
 	else 
-		DrawTextEx(GetFontDefault(), "White to play", {(static_cast<float>(screen_width) - TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - FEATURES_Y_OFFSET) / 2}, BASE_TEXT_SIZE, FEATURES_SPACING, WHITE);
+		DrawTextEx(GetFontDefault(), "White to play", { (static_cast<float>(screen_width) - TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - FEATURES_Y_OFFSET) / 2 }, BASE_TEXT_SIZE, FEATURES_SPACING, WHITE);
 }
 
 void Board::drawPassButton()
 {
 	DrawRectangle((screen_width - BUTTON_WIDTH) / 2, (screen_height + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE) / 2, BUTTON_WIDTH, BUTTON_HEIGHT, BROWN);
-	DrawTextEx(GetFontDefault(), "PASS", {(static_cast<float>(screen_width) - BUTTON_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE + BUTTON_TEXT_Y_OFFSET) / 2}, BASE_TEXT_SIZE, FEATURES_SPACING, BEIGE);
+	DrawTextEx(GetFontDefault(), "PASS", { (static_cast<float>(screen_width) - BUTTON_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE + BUTTON_TEXT_Y_OFFSET) / 2 }, BASE_TEXT_SIZE, FEATURES_SPACING, BEIGE);
 }
+
+
+#ifdef BOO
+void Board::evaluateScore()
+{
+	std::map<int, std::set<std::pair<int, int>>> checkedGroup;
+
+	std::
+
+	int key{};
+
+	for (int i{}; i < NUMBER_OF_SQUARES; ++i)
+	{
+		for (int j{}; j < NUMBER_OF_SQUARES; ++j)
+		{
+			if (!checkedGroup[key].contains({ i, j }))
+			{
+				++key;
+
+
+			}
+		}
+	}
+
+	for (std::set<std::pair<int, int>> k : checkedGroup)
+}
+#endif
+
 
 void Board::checkPlayAgainOrExit()
 {
@@ -325,7 +353,7 @@ void Board::checkPlayAgainOrExit()
 			//Reset the player, score and pass counter
 			this->m_player = 1;
 			this->m_passes = 0;
-			this->m_score = {-KOMI};
+			this->m_score = { -KOMI };
 		}
 	}
 }
@@ -336,9 +364,9 @@ void Board::drawGameEndPopup()
 
 	DrawRectangle((screen_width - PA_BUTTON_WIDTH) / 2, (screen_height + PA_FEATURES_Y_OFFSET) / 2, PA_BUTTON_WIDTH, PA_BUTTON_HEIGHT, DARKBROWN);
 
-	DrawTextEx(GetFontDefault(), (this->m_score > 0) ? ("Black Wins") : ("White Wins"), {(static_cast<float>(screen_width) - PA_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - PA_FEATURES_Y_OFFSET - PA_BUTTON_HEIGHT) / 2}, BASE_TEXT_SIZE * 2, FEATURES_SPACING, BEIGE);
+	DrawTextEx(GetFontDefault(), (this->m_score > 0) ? ("Black Wins") : ("White Wins"), { (static_cast<float>(screen_width) - PA_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - PA_FEATURES_Y_OFFSET - PA_BUTTON_HEIGHT) / 2 }, BASE_TEXT_SIZE * 2, FEATURES_SPACING, BEIGE);
 
-	DrawTextEx(GetFontDefault(), "Play Again", {(static_cast<float>(screen_width) - PA_BUTTON_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) + PA_BUTTON_TEXT_Y_OFFSET) / 2}, BASE_TEXT_SIZE, FEATURES_SPACING, BEIGE);
+	DrawTextEx(GetFontDefault(), "Play Again", { (static_cast<float>(screen_width) - PA_BUTTON_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) + PA_BUTTON_TEXT_Y_OFFSET) / 2 }, BASE_TEXT_SIZE, FEATURES_SPACING, BEIGE);
 }
 
 void Board::renderGame() //Does all the drawing inside a raylib window loop 
