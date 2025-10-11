@@ -48,15 +48,15 @@ void Board::checkMovesOrPasses()
 			{
 				this->m_board[playedRow][playedCol] += this->m_player;
 				this->m_player *= -1;
-				
-				std::vector<std::vector<int>> timesChecked(NUMBER_OF_SQUARES, std::vector<int>(NUMBER_OF_SQUARES, 0));
+
+				//START OF BFS
 
 				bool playedPieceIsSafe{ false };
 
 				std::queue<std::pair<int, int>> toBeSearched;
 
-				//Search & Remove dead pieces (if any) for the player who did NOT play the last move				
-				for (int i{0}; i <= 4; ++i)
+				//BFSearch & Remove dead pieces (if any) for the player who did NOT play the last move				
+				for (int i{0}; i < std::ssize(DIRECTIONS); ++i)
 				{
 					int row = playedRow + DIRECTIONS[i][0];
 					int col = playedCol + DIRECTIONS[i][1];
@@ -65,12 +65,11 @@ void Board::checkMovesOrPasses()
 						col >= 0 &&
 						row < NUMBER_OF_SQUARES &&
 						col < NUMBER_OF_SQUARES &&
-						timesChecked[row][col] <= 4 &&
 						m_board[row][col] == m_player)
 					{
 						bool hasLiberty{ false };
 
-						++timesChecked[row][col];
+						std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> timesChecked;
 
 						std::vector<std::pair<int, int>> piecesInGroup;
 						piecesInGroup.push_back({ row, col });
@@ -100,10 +99,12 @@ void Board::checkMovesOrPasses()
 										if (this->m_board[rowBFS][colBFS] == 0)
 										{
 											hasLiberty = true;
+
+											goto lib_check_1;
 										}
-										else if (this->m_board[rowBFS][colBFS] == this->m_board[row][col] && timesChecked[rowBFS][colBFS] <= 4)
+										else if (this->m_board[rowBFS][colBFS] == this->m_board[row][col] && timesChecked[rowBFS][colBFS] <= TIMES_CHECKED_PERMITTED)
 										{
-											++timesChecked[rowBFS][colBFS];
+											++timesChecked[rowNew][colNew];
 
 											piecesInGroup.push_back({ rowBFS, colBFS });
 
@@ -125,11 +126,15 @@ void Board::checkMovesOrPasses()
 							playedPieceIsSafe = true;
 						}
 					}
+
+				lib_check_1:
+					continue;
 				}
 
-				//Search & Remove dead pieces for the player who DID play the last move				
+				//BFSearch & Remove dead pieces for the player who DID play the last move				
 				if (!playedPieceIsSafe)
 				{
+					bool hasLiberty{ false };
 					for (int i{ 0 }; i < std::ssize(DIRECTIONS); ++i)
 					{
 						int row = playedRow + DIRECTIONS[i][0];
@@ -139,12 +144,11 @@ void Board::checkMovesOrPasses()
 							col >= 0 &&
 							row < NUMBER_OF_SQUARES &&
 							col < NUMBER_OF_SQUARES &&
-							timesChecked[row][col] <= 4 &&
 							m_board[row][col] == m_player * (-1))
 						{
-							bool hasLiberty{ false };
+							/*bool hasLiberty{ false };*/
 
-							++timesChecked[row][col];
+							std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> timesChecked;
 
 							std::vector<std::pair<int, int>> piecesInGroup;
 							piecesInGroup.push_back({ row, col });
@@ -172,10 +176,12 @@ void Board::checkMovesOrPasses()
 											if (this->m_board[rowBFS][colBFS] == 0)
 											{
 												hasLiberty = true;
+
+												goto lib_check_2;
 											}
-											else if (this->m_board[rowBFS][colBFS] == this->m_board[row][col] && timesChecked[rowBFS][colBFS] <= 4)
+											else if (this->m_board[rowBFS][colBFS] == this->m_board[row][col] && timesChecked[rowBFS][colBFS] <= TIMES_CHECKED_PERMITTED)
 											{
-												++timesChecked[rowBFS][colBFS];
+												++timesChecked[rowNew][colNew];
 
 												piecesInGroup.push_back({ rowBFS, colBFS });
 
@@ -186,7 +192,7 @@ void Board::checkMovesOrPasses()
 								}
 							}
 
-							//Check for & reverse illegal moves
+							//Detect & reverse illegal moves 
 							if (!hasLiberty && this->m_board[playedRow][playedCol] == m_player * (-1))
 							{
 								m_board[playedRow][playedCol] = 0;
@@ -203,8 +209,11 @@ void Board::checkMovesOrPasses()
 								}
 							}
 						}
+					lib_check_2:
+						continue;
 					}
 				}
+				END OF BFS
 
 				this->m_passes = 0;
 
@@ -221,6 +230,12 @@ void Board::checkMovesOrPasses()
 				this->m_player *= -1;
 				++this->m_passes;
 		}
+	}
+
+	if (IsKeyPressed(KEY_SPACE))
+	{
+				this->m_player *= -1;
+				++this->m_passes;
 	}
 }
 
@@ -302,33 +317,94 @@ void Board::drawPassButton()
 	DrawTextEx(GetFontDefault(), "PASS", { (static_cast<float>(screen_width) - BUTTON_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE + BUTTON_TEXT_Y_OFFSET) / 2 }, BASE_TEXT_SIZE, FEATURES_SPACING, BEIGE);
 }
 
-
-#ifdef BOO
 void Board::evaluateScore()
 {
-	std::map<int, std::set<std::pair<int, int>>> checkedGroup;
-
-	std::
-
-	int key{};
-
-	for (int i{}; i < NUMBER_OF_SQUARES; ++i)
+	if (!m_scoreEvaluated)
 	{
-		for (int j{}; j < NUMBER_OF_SQUARES; ++j)
+		std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> checkedPos;
+
+		std::queue<std::pair<int, int>> toBeSearched;
+
+		//Iterate through Board to log territories fully controlled (non-neutral) by one player
+		for (int row{0}; row < NUMBER_OF_SQUARES; ++row)
 		{
-			if (!checkedGroup[key].contains({ i, j }))
+			for (int col{0}; col < NUMBER_OF_SQUARES; ++col)
 			{
-				++key;
+				if (checkedPos[row][col] == 0 && this->m_board[row][col] == 0)
+				{
+					bool touchesBlack{ false };
+					bool touchesWhite{ false };
 
+					++checkedPos[row][col];
 
+					std::vector<std::pair<int, int>> piecesInGroup;
+					piecesInGroup.push_back({ row, col });
+
+					toBeSearched.push({ row, col });
+
+					while (!toBeSearched.empty())
+					{
+						auto [rowNew, colNew] = toBeSearched.front();
+
+						toBeSearched.pop();
+
+						for (int i{0}; i < std::ssize(DIRECTIONS) - 1; ++i)
+						{
+							int rowBFS = rowNew + DIRECTIONS[i][0];
+							int colBFS = colNew + DIRECTIONS[i][1];
+
+							if (rowBFS >= 0 &&
+								colBFS >= 0 &&
+								rowBFS < NUMBER_OF_SQUARES &&
+								colBFS < NUMBER_OF_SQUARES && 
+								checkedPos[rowBFS][colBFS] == 0)
+							{
+								if (this->m_board[rowBFS][colBFS] == 1)
+								{
+									touchesBlack = true;
+								}
+								else if (this->m_board[rowBFS][colBFS] == -1)
+								{
+									touchesWhite = true;
+								}
+								else if (this->m_board[rowBFS][colBFS] == 0)
+								{
+									piecesInGroup.push_back({ rowBFS, colBFS });
+
+									toBeSearched.push({ rowBFS, colBFS });
+								}
+
+								++checkedPos[rowBFS][colBFS];
+							}
+						}
+					}
+
+					//If territory is fully controlled by Black
+					if (touchesBlack && !touchesWhite)
+					{
+						for (auto const& coords : piecesInGroup)
+						{
+							++this->m_score;
+						}
+					}
+
+					//If territory is fully controlled by White
+					else if (!touchesBlack && touchesWhite)
+					{
+						for (auto const& coords : piecesInGroup)
+						{
+							--this->m_score;
+						}
+					}
+				}
 			}
 		}
+
+		std::cout << ((m_score > 0) ? "Black" : "White") << " wins by " << ((m_score > 0) ? m_score : -m_score) << " points!\n";
+
+		m_scoreEvaluated = true;
 	}
-
-	for (std::set<std::pair<int, int>> k : checkedGroup)
 }
-#endif
-
 
 void Board::checkPlayAgainOrExit()
 {
@@ -350,10 +426,11 @@ void Board::checkPlayAgainOrExit()
 				}
 			}
 
-			//Reset the player, score and pass counter
+			//Reset the player, score, pass counter, and m_scoreEvaluated bool
 			this->m_player = 1;
 			this->m_passes = 0;
-			this->m_score = { -KOMI };
+			this->m_score = -KOMI ;
+			this->m_scoreEvaluated = false;
 		}
 	}
 }
@@ -402,6 +479,7 @@ void Board::renderGame() //Does all the drawing inside a raylib window loop
 	jump_point:
 
 		//Update Popup
+		//evaluateScore();
 		checkPlayAgainOrExit();
 
 		//Draw Play Again Popup

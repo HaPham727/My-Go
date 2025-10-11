@@ -25,6 +25,8 @@ constexpr float KOMI = 7.5; //Set komi (7.5 is standard under Chinese rules)
 //Helper constant expressions (Do not change)
 constexpr std::array<std::array<int, 2>, 5> DIRECTIONS = { { {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {0, 0} } }; //Directions to reach adjacent elements
 
+constexpr int TIMES_CHECKED_PERMITTED = 90;
+
 constexpr int HALF_OF_SQUARES = NUMBER_OF_SQUARES / 2; //Half & round down for calculations
 constexpr int PIECE_RADIUS = SQUARE_SIZE * 9 / 20; //Calculate the piece radius for rendering
 constexpr int DOT_RADIUS = SQUARE_SIZE / 8; //Calculate the piece radius for rendering
@@ -86,6 +88,8 @@ private:
 	int m_passes{ 0 }; //Counts how many passes since the last move was played. 2 continuous passes = game end
 
 	float m_score{ -KOMI }; //Positive scores = Black wins, Negative scores = White wins
+
+	bool m_scoreEvaluated{ false }; //Bool to make sure score is only evaluated once at end of game
 };
 
 #endif
