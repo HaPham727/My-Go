@@ -3,10 +3,12 @@ A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in th
 
 ## 🌟Features
 - Render Go/Weiqi/Baduk/Cờ Vây board at sizes 19x19, 13x13, and 9x9.
-- Use left mouse clicks to place Black and White pieces in alternating order.
-- Dead/surrounded groups of pieces are automatically removed from the board.
+- Left mouse clicks can be used to place Black and White pieces in alternating order.
+- A Pass button/SPACEBAR can be used to change the curent player.
 - A Game End screen with option to play again pops up after 2 consecutive passes.
+- Dead/surrounded groups of pieces are automatically removed from the board.
+- Scores are calculated according to Chinese rules.
 
 ## ✨Plans
-- Add scoring (most likely under Chinese rules).
 - Add app icon.
+- Clean the code.
