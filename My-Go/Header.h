@@ -23,9 +23,9 @@ constexpr float KOMI = 7.5; //Set komi (7.5 is standard under Chinese rules)
 
 
 //Helper constant expressions (Do not change)
-constexpr std::array<std::array<int, 2>, 5> DIRECTIONS = { { {1, 0}, {-1, 0}, {0, 1}, {0, -1}, {0, 0} } }; //Directions to reach adjacent elements
+constexpr std::array<std::array<int, 2>, 5> DIRECTIONS = { { {-1, 0}, {0, -1}, {1, 0}, {0, 1}, {0, 0} } }; //Directions to reach adjacent elements
 
-constexpr int TIMES_CHECKED_PERMITTED = 90;
+constexpr int TIMES_CHECKED_PERMITTED = 4;
 
 constexpr int HALF_OF_SQUARES = NUMBER_OF_SQUARES / 2; //Half & round down for calculations
 constexpr int PIECE_RADIUS = SQUARE_SIZE * 9 / 20; //Calculate the piece radius for rendering
