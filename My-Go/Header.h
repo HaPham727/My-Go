@@ -16,7 +16,7 @@
 
 
 //Constant expressions (Set to liking)
-constexpr int  NUMBER_OF_SQUARES = 9; //Set board size (MUST BE ODD) (19x19 is standard for Go)
+constexpr int  NUMBER_OF_SQUARES = 19; //Set board size (MUST BE ODD) (19x19 is standard for Go)
 constexpr int SQUARE_SIZE = 40; //Set square size (Suggested: 40 for 19x19)
 constexpr float KOMI = 7.5; //Set komi (7.5 is standard under Chinese rules)
 

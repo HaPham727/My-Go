@@ -48,22 +48,99 @@ void Board::checkMovesOrPasses()
 			{
 				this->m_board[playedRow][playedCol] += this->m_player;
 
-				//std::cout << "Played Row " << playedRow << " and Col " << playedCol << '\n';
 
-				bool playedPieceIsSafe{ false };
-
-				//BFSearch & Remove dead pieces (if any) for the player who did NOT play the last move
-				for (int i{ 0 }; i < std::ssize(DIRECTIONS) - 1; ++i)
+				//Namespace for checking if the latest move was a capture (& remove dead groups if so) or illegal (& reverse it if so)
 				{
-					int row = playedRow + DIRECTIONS[i][0];
-					int col = playedCol + DIRECTIONS[i][1];
+					bool playedPieceIsSafe{ false };
 
-					if (row >= 0 &&
-						col >= 0 &&
-						row < NUMBER_OF_SQUARES &&
-						col < NUMBER_OF_SQUARES &&
-						m_board[row][col] == this->m_player * (-1))
+					//BFSearch & Remove dead pieces (if any) for the player who did NOT play the last move
+					for (int i{ 0 }; i < (std::ssize(DIRECTIONS) - 1); ++i)
 					{
+						int row = playedRow + DIRECTIONS[i][0];
+						int col = playedCol + DIRECTIONS[i][1];
+
+						if (row >= 0 &&
+							col >= 0 &&
+							row < NUMBER_OF_SQUARES &&
+							col < NUMBER_OF_SQUARES &&
+							m_board[row][col] == this->m_board[playedRow][playedCol] * (-1))
+						{
+							bool hasLiberty{ false };
+
+							std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> timesChecked{};
+							++timesChecked[row][col];
+
+							std::queue<std::pair<int, int>> toBeSearched;
+							toBeSearched.push({ row, col });
+
+							//Check if the group starting from [row][col] has liberty (is not dead) or nah
+							while (!toBeSearched.empty())
+							{
+								int queue_size = static_cast<int>(std::ssize(toBeSearched));
+
+								for (int j{ 0 }; j < queue_size; ++j)
+								{
+									auto [rowNew, colNew] = toBeSearched.front(); //Apparently the auto can't be a reference (auto&)
+
+									toBeSearched.pop();
+
+									for (int k{ 0 }; k < (std::ssize(DIRECTIONS) - 1); ++k)
+									{
+										int rowBFS = rowNew + DIRECTIONS[k][0];
+										int colBFS = colNew + DIRECTIONS[k][1];
+
+										if (rowBFS >= 0 &&
+											colBFS >= 0 &&
+											rowBFS < NUMBER_OF_SQUARES &&
+											colBFS < NUMBER_OF_SQUARES)
+										{
+											if (this->m_board[rowBFS][colBFS] == 0)
+											{
+												hasLiberty = true;
+
+												goto lib_check_1;
+											}
+											else if (this->m_board[rowBFS][colBFS] == this->m_board[rowNew][colNew] && timesChecked[rowBFS][colBFS] == 0)//TIMES_CHECKED_PERMITTED)
+											{
+												++timesChecked[rowBFS][colBFS];
+
+												toBeSearched.push({ rowBFS, colBFS });
+											}
+										}
+									}
+								}
+							}
+
+							//Remove dead groups if the group starting from [row][col] has no liberty
+							if (!hasLiberty)
+							{
+								std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n" << '\n';
+
+								for (int m{ 0 }; m < NUMBER_OF_SQUARES; ++m)
+								{
+									for (int n{ 0 }; n < NUMBER_OF_SQUARES; ++n)
+									{
+										if (timesChecked[m][n] > 0)
+										{
+											this->m_board[m][n] = 0;
+										}
+									}
+								}
+
+								playedPieceIsSafe = true;
+							}
+						}
+
+					lib_check_1:
+						continue;
+					}
+
+					//Reverse move (if needed) by searching the group of the played piece				
+					if (!playedPieceIsSafe)
+					{
+						int row = playedRow;
+						int col = playedCol;
+
 						bool hasLiberty{ false };
 
 						std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> timesChecked{};
@@ -76,16 +153,16 @@ void Board::checkMovesOrPasses()
 						{
 							int queue_size = static_cast<int>(std::ssize(toBeSearched));
 
-							for (int j{ 0 }; j < queue_size; ++j)
+							for (int i{ 0 }; i < queue_size; ++i)
 							{
-								auto& [rowNew, colNew] = toBeSearched.front();
+								auto [rowNew, colNew] = toBeSearched.front();
 
 								toBeSearched.pop();
 
-								for (int k{ 0 }; k < std::ssize(DIRECTIONS) - 1; ++k)
+								for (int j{ 0 }; j < std::ssize(DIRECTIONS) - 1; ++j)
 								{
-									int rowBFS = rowNew + DIRECTIONS[k][0];
-									int colBFS = colNew + DIRECTIONS[k][1];
+									int rowBFS = rowNew + DIRECTIONS[j][0];
+									int colBFS = colNew + DIRECTIONS[j][1];
 
 									if (rowBFS >= 0 &&
 										colBFS >= 0 &&
@@ -96,7 +173,7 @@ void Board::checkMovesOrPasses()
 										{
 											hasLiberty = true;
 
-											goto lib_check_1;
+											goto lib_check_2;
 										}
 										else if (this->m_board[rowBFS][colBFS] == this->m_board[rowNew][colNew] && timesChecked[rowBFS][colBFS] <= TIMES_CHECKED_PERMITTED)
 										{
@@ -109,111 +186,16 @@ void Board::checkMovesOrPasses()
 							}
 						}
 
-						//Debug namespace
-						{
-						std::cout << "This is how the timesChecked array look: \n";
-						for (int i{}; i <= HALF_OF_SQUARES * 2; ++i)
-						{
-							std::cout << "Row " << std::setw(2) << i + 1 << ": ";
-
-							for (int j{}; j <= HALF_OF_SQUARES * 2; ++j)
-							{
-								std::cout << std::setw(2) << timesChecked[i][j] << ' ';
-							}
-							std::cout << '\n';
-						}
-						std::cout << '\n';
-						}
-
-						//Remove dead groups if the group starting from [row][col] has no liberty
+						//Reverse move if illegal 
 						if (!hasLiberty)
 						{
-							std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n" << '\n';
-
-							for (int m{}; m < NUMBER_OF_SQUARES; ++m)
-							{
-								for (int n{}; n < NUMBER_OF_SQUARES; ++n)
-								{
-									if (timesChecked[m][n] > 0)
-									{
-										this->m_board[m][n] = 0;
-									}
-								}
-							}
-
-							playedPieceIsSafe = true;
+							this->m_board[playedRow][playedCol] = 0;
+							this->m_player *= -1;
 						}
 
-
+					lib_check_2:
+						;
 					}
-
-				lib_check_1:
-					continue;
-				}
-
-				//Havent fixed lower branch yet
-
-				//Reverse move (if need) by searching the group of the played piece				
-				if (!playedPieceIsSafe)
-				{
-					bool hasLiberty{ false };
-
-					int row = playedRow;
-					int col = playedCol;
-
-					std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> timesChecked{};
-
-					std::queue<std::pair<int, int>> toBeSearched;
-					toBeSearched.push({ row, col });
-
-					//Check if the group starting from [row][col] has liberty (is not dead) or nah
-					while (!toBeSearched.empty())
-					{
-						int queue_size = static_cast<int>(std::ssize(toBeSearched));
-
-						for (int j{ 0 }; j < queue_size; ++j)
-						{
-							auto [rowNew, colNew] = toBeSearched.front();
-
-							toBeSearched.pop();
-
-							for (int k{ 0 }; k < std::ssize(DIRECTIONS) - 1; ++k)
-							{
-								int rowBFS = rowNew + DIRECTIONS[k][0];
-								int colBFS = colNew + DIRECTIONS[k][1];
-
-								if (rowBFS >= 0 &&
-									colBFS >= 0 &&
-									rowBFS < NUMBER_OF_SQUARES &&
-									colBFS < NUMBER_OF_SQUARES)
-								{
-									if (this->m_board[rowBFS][colBFS] == 0)
-									{
-										hasLiberty = true;
-
-										goto lib_check_2;
-									}
-									else if (this->m_board[rowBFS][colBFS] == this->m_player && 
-											 timesChecked[rowBFS][colBFS] == 0)
-									{
-										++timesChecked[rowBFS][colBFS];
-
-										toBeSearched.push({ rowBFS, colBFS });
-									}
-								}
-							}
-						}
-					}
-
-					//Detect & reverse illegal moves 
-					if (!hasLiberty && this->m_board[playedRow][playedCol] == this->m_player)
-					{
-						this->m_board[playedRow][playedCol] = 0;
-						this->m_player *= -1;
-					}
-
-				lib_check_2:
-					;
 				}
 
 				this->m_player *= -1;
@@ -240,34 +222,18 @@ void Board::checkMovesOrPasses()
 		this->m_player *= -1;
 		++this->m_passes;
 	}
-
-	//Debug tool
-	if (IsKeyPressed(KEY_Q))
-	{
-		for (int i{0}; i < NUMBER_OF_SQUARES - 3; ++i)
-		{
-			for (int j{}; j < NUMBER_OF_SQUARES; ++j)
-			{
-				this->m_board[i][j] = -1;
-
-				if (i == NUMBER_OF_SQUARES - 4 && j < NUMBER_OF_SQUARES-1)
-				{
-					this->m_board[NUMBER_OF_SQUARES - 4][j] = 1;
-				}
-			}
-		}
-	}
 }
 
 void Board::drawGrid()
 {
+	//Draw the grid
 	for (int i{-HALF_OF_SQUARES}; i <= HALF_OF_SQUARES; i += 1)
 	{
 		DrawLineEx( {static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + HALF_OF_SQUARES * SQUARE_SIZE }, { static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 - HALF_OF_SQUARES * SQUARE_SIZE }, LINE_THICKNESS, BLACK);
 		DrawLineEx( {static_cast<float>(screen_width) / 2 + HALF_OF_SQUARES * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE }, { static_cast<float>(screen_width) / 2 - HALF_OF_SQUARES * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE }, LINE_THICKNESS, BLACK);
 	}
 
-	//Draw the dots
+	//Draw the dots if one of 19x19, 13x13, or 9x9 is selected
 	switch (NUMBER_OF_SQUARES)
 	{
 	case 19:
@@ -325,7 +291,7 @@ void Board::drawPieces()
 
 void Board::drawCurrentPlayer()
 {
-	if (m_player > 0)
+	if (this->m_player > 0)
 		DrawTextEx(GetFontDefault(), "Black to play", { (static_cast<float>(screen_width) - TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - FEATURES_Y_OFFSET) / 2 }, BASE_TEXT_SIZE, FEATURES_SPACING, BLACK);
 	else 
 		DrawTextEx(GetFontDefault(), "White to play", { (static_cast<float>(screen_width) - TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - FEATURES_Y_OFFSET) / 2 }, BASE_TEXT_SIZE, FEATURES_SPACING, WHITE);
@@ -346,9 +312,9 @@ void Board::evaluateScore()
 		std::queue<std::pair<int, int>> toBeSearched;
 
 		//Iterate through Board to check if territories are fully controlled (non-neutral) by one player
-		for (int row{0}; row < NUMBER_OF_SQUARES; ++row)
+		for (int row{ 0 }; row < NUMBER_OF_SQUARES; ++row)
 		{
-			for (int col{0}; col < NUMBER_OF_SQUARES; ++col)
+			for (int col{ 0 }; col < NUMBER_OF_SQUARES; ++col)
 			{
 				if (this->m_board[row][col] == 0 && timesChecked[row][col] == 0)
 				{
@@ -356,9 +322,6 @@ void Board::evaluateScore()
 					bool touchesWhite{ false };
 
 					++timesChecked[row][col];
-
-					std::vector<std::pair<int, int>> piecesInGroup;
-					piecesInGroup.push_back({ row, col });
 
 					toBeSearched.push({ row, col });
 
@@ -368,7 +331,7 @@ void Board::evaluateScore()
 
 						toBeSearched.pop();
 
-						for (int i{0}; i < std::ssize(DIRECTIONS) - 1; ++i)
+						for (int i{ 0 }; i < std::ssize(DIRECTIONS) - 1; ++i)
 						{
 							int rowBFS = rowNew + DIRECTIONS[i][0];
 							int colBFS = colNew + DIRECTIONS[i][1];
@@ -391,16 +354,14 @@ void Board::evaluateScore()
 								{
 									++timesChecked[rowBFS][colBFS];
 
-									piecesInGroup.push_back({ rowBFS, colBFS });
-
 									toBeSearched.push({ rowBFS, colBFS });
 								}
 							}
 						}
 					}
 
-					//If territory starting from [row][col] is fully controlled by Black
-					if (touchesBlack && !touchesWhite)
+					//If territory starting from [row][col] is fully controlled but only by one side
+					if (touchesBlack != touchesWhite)
 					{
 						std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> cleared{};
 
@@ -412,16 +373,16 @@ void Board::evaluateScore()
 						{
 							int queue_size = static_cast<int>(toBeSearched.size());
 
-							for (int j{ 0 }; j < queue_size; ++j)
+							for (int i{ 0 }; i < queue_size; ++i)
 							{
 								auto& [rowNew, colNew] = toBeSearched.front();
 
 								toBeSearched.pop();
 
-								for (int k{ 0 }; k < std::ssize(DIRECTIONS) - 1; ++k)
+								for (int j{ 0 }; j < std::ssize(DIRECTIONS) - 1; ++j)
 								{
-									int rowBFS = rowNew + DIRECTIONS[k][0];
-									int colBFS = colNew + DIRECTIONS[k][1];
+									int rowBFS = rowNew + DIRECTIONS[j][0];
+									int colBFS = colNew + DIRECTIONS[j][1];
 
 									if (rowBFS >= 0 &&
 										colBFS >= 0 &&
@@ -430,55 +391,16 @@ void Board::evaluateScore()
 										this->m_board[rowBFS][colBFS] == 0 &&
 										cleared[rowBFS][colBFS] == 0)
 									{
-										++this->m_score;
+										//If the group only touches Black pieces
+										if (!touchesWhite)
+											++this->m_score;
+										//Else if the group only touches White pieces
+										else if (!touchesBlack)
+											--this->m_score;
 
 										++cleared[rowBFS][colBFS];
 
 										toBeSearched.push({ rowBFS, colBFS });
-
-									}
-								}
-							}
-						}
-					}
-
-					//If territory starting from [row][col] is fully controlled by White
-					else if (!touchesBlack && touchesWhite)
-					{
-						std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> cleared{};
-
-						toBeSearched.push({ row, col });
-
-						this->m_board[row][col] = 0;
-
-						while (!toBeSearched.empty())
-						{
-							int queue_size = static_cast<int>(toBeSearched.size());
-
-							for (int j{ 0 }; j < queue_size; ++j)
-							{
-								auto& [rowNew, colNew] = toBeSearched.front();
-
-								toBeSearched.pop();
-
-								for (int k{ 0 }; k < std::ssize(DIRECTIONS) - 1; ++k)
-								{
-									int rowBFS = rowNew + DIRECTIONS[k][0];
-									int colBFS = colNew + DIRECTIONS[k][1];
-
-									if (rowBFS >= 0 &&
-										colBFS >= 0 &&
-										rowBFS < NUMBER_OF_SQUARES &&
-										colBFS < NUMBER_OF_SQUARES &&
-										this->m_board[rowBFS][colBFS] == 0 &&
-										cleared[rowBFS][colBFS] == 0)
-									{
-										--this->m_score;
-
-										++cleared[rowBFS][colBFS];
-
-										toBeSearched.push({ rowBFS, colBFS });
-
 									}
 								}
 							}
@@ -506,6 +428,7 @@ void Board::checkPlayAgainOrExit()
 			mousePos.y > (static_cast<float>(screen_height) + PA_FEATURES_Y_OFFSET) / 2 &&
 			mousePos.y < (static_cast<float>(screen_height) + PA_FEATURES_Y_OFFSET + PA_BUTTON_HEIGHT * 2) / 2)
 		{
+			//Reset the board
 			for (int i{}; i < NUMBER_OF_SQUARES; ++i)
 			{
 				for (int j{}; j < NUMBER_OF_SQUARES; ++j)
@@ -549,10 +472,9 @@ void Board::renderGame() //Does all the drawing inside a raylib window loop
 		//Detect moves
 		checkMovesOrPasses();
 
-		//If condition to speed up transition between Board and Play Again popup after the 2nd continuous PASS is pressed
+		//Conditional to speed up transition between Board and Play Again popup after the 2nd consecutive PASS is pressed
 		if (this->m_passes == 2)
 		{
-			//evaluateScore();
 			goto jump_point;
 		}
 
