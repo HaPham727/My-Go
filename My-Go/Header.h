@@ -2,15 +2,9 @@
 #define HEADER
 
 //Library 
-#include <iostream>
 #include <array>
-#include <vector>
 #include <queue>
-#include <map>
-#include <set>
-#include <utility>
 #include <cmath>
-#include <iomanip>
 #include <raylib.h>
 
 
@@ -25,15 +19,13 @@ constexpr float KOMI = 7.5; //Set komi (7.5 is standard under Chinese rules)
 //Helper constant expressions (Do not change)
 constexpr std::array<std::array<int, 2>, 5> DIRECTIONS = { { {-1, 0}, {0, -1}, {1, 0}, {0, 1}, {0, 0} } }; //Directions to reach adjacent elements
 
-constexpr int TIMES_CHECKED_PERMITTED = 4;
-
 constexpr int HALF_OF_SQUARES = NUMBER_OF_SQUARES / 2; //Half & round down for calculations
 constexpr int PIECE_RADIUS = SQUARE_SIZE * 9 / 20; //Calculate the piece radius for rendering
 constexpr int DOT_RADIUS = SQUARE_SIZE / 8; //Calculate the piece radius for rendering
 constexpr float LINE_THICKNESS = 3.0; //Thickness of lines on the board
 
-constexpr int FEATURES_Y_OFFSET = (NUMBER_OF_SQUARES + 2) * SQUARE_SIZE; //Y offset for player display text and pass button
-constexpr int FEATURES_SPACING = 7; //Spacing for player display & button texts
+constexpr int FEATURES_Y_OFFSET = (NUMBER_OF_SQUARES + 2) * SQUARE_SIZE; 
+constexpr int FEATURES_SPACING = 7;
 constexpr int TEXT_X_OFFSET = 318; 
 constexpr int BASE_TEXT_SIZE = 42; 
 constexpr int BUTTON_TEXT_X_OFFSET = 126;
@@ -57,8 +49,6 @@ class Board
 {
 public:
 	Board();
-
-	void printBoard();
 
 	void checkMovesOrPasses();
 

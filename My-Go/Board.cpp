@@ -5,31 +5,16 @@ int screen_height = 960; //Default window height
 
 Board::Board() //Initialize the board-recording 2D array 
 {
-	for (int i{}; i <= HALF_OF_SQUARES * 2; ++i)
+	for (int i{ 0 }; i <= HALF_OF_SQUARES * 2; ++i)
 	{
-		for (int j{}; j <= HALF_OF_SQUARES * 2; ++j)
+		for (int j{ 0 }; j <= HALF_OF_SQUARES * 2; ++j)
 		{
 			this->m_board[i][j] = 0;
 		}
 	}
 }
 
-void Board::printBoard() //Print board to console
-{
-	for (int i{}; i <= HALF_OF_SQUARES * 2; ++i)
-	{
-		std::cout << "Row " << std::setw(2) << i + 1 << ": ";
-
-		for (int j{}; j <= HALF_OF_SQUARES * 2; ++j)
-		{
-			std::cout << std::setw(2) << this->m_board[i][j] << ' ';
-		}
-		std::cout << '\n';
-	}
-	std::cout << '\n';
-}
-
-void Board::checkMovesOrPasses()
+void Board::checkMovesOrPasses() //Detects mouse click to play move or pass
 {
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
 	{
@@ -47,7 +32,6 @@ void Board::checkMovesOrPasses()
 			if (m_board[playedRow][playedCol] == 0)
 			{
 				this->m_board[playedRow][playedCol] += this->m_player;
-
 
 				//Namespace for checking if the latest move was a capture (& remove dead groups if so) or illegal (& reverse it if so)
 				{
@@ -70,7 +54,7 @@ void Board::checkMovesOrPasses()
 							std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> timesChecked{};
 							++timesChecked[row][col];
 
-							std::queue<std::pair<int, int>> toBeSearched;
+							std::queue<std::pair<int, int>> toBeSearched{};
 							toBeSearched.push({ row, col });
 
 							//Check if the group starting from [row][col] has liberty (is not dead) or nah
@@ -80,7 +64,7 @@ void Board::checkMovesOrPasses()
 
 								for (int j{ 0 }; j < queue_size; ++j)
 								{
-									auto [rowNew, colNew] = toBeSearched.front(); //Apparently the auto can't be a reference (auto&)
+									auto [rowNew, colNew] = toBeSearched.front(); //Reference MUST NOT be used because it's linked to the queue variable, which gets destroyed
 
 									toBeSearched.pop();
 
@@ -100,7 +84,7 @@ void Board::checkMovesOrPasses()
 
 												goto lib_check_1;
 											}
-											else if (this->m_board[rowBFS][colBFS] == this->m_board[rowNew][colNew] && timesChecked[rowBFS][colBFS] == 0)//TIMES_CHECKED_PERMITTED)
+											else if (this->m_board[rowBFS][colBFS] == this->m_board[rowNew][colNew] && timesChecked[rowBFS][colBFS] == 0)
 											{
 												++timesChecked[rowBFS][colBFS];
 
@@ -114,7 +98,7 @@ void Board::checkMovesOrPasses()
 							//Remove dead groups if the group starting from [row][col] has no liberty
 							if (!hasLiberty)
 							{
-								std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n" << '\n';
+								//std::cout << "The group of pieces starting from (" << row << ", " << col << ") is DEAD\n" << '\n';
 
 								for (int m{ 0 }; m < NUMBER_OF_SQUARES; ++m)
 								{
@@ -145,7 +129,7 @@ void Board::checkMovesOrPasses()
 
 						std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> timesChecked{};
 
-						std::queue<std::pair<int, int>> toBeSearched;
+						std::queue<std::pair<int, int>> toBeSearched{};
 						toBeSearched.push({ row, col });
 
 						//Check if the group starting from [row][col] has liberty (is not dead) or nah
@@ -175,7 +159,7 @@ void Board::checkMovesOrPasses()
 
 											goto lib_check_2;
 										}
-										else if (this->m_board[rowBFS][colBFS] == this->m_board[rowNew][colNew] && timesChecked[rowBFS][colBFS] <= TIMES_CHECKED_PERMITTED)
+										else if (this->m_board[rowBFS][colBFS] == this->m_board[rowNew][colNew] && timesChecked[rowBFS][colBFS] == 0)
 										{
 											++timesChecked[rowBFS][colBFS];
 
@@ -201,8 +185,6 @@ void Board::checkMovesOrPasses()
 				this->m_player *= -1;
 
 				this->m_passes = 0;
-
-				this->printBoard();
 			}
 		}
 
@@ -227,7 +209,7 @@ void Board::checkMovesOrPasses()
 void Board::drawGrid()
 {
 	//Draw the grid
-	for (int i{-HALF_OF_SQUARES}; i <= HALF_OF_SQUARES; i += 1)
+	for (int i{ -HALF_OF_SQUARES }; i <= HALF_OF_SQUARES; i += 1)
 	{
 		DrawLineEx( {static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + HALF_OF_SQUARES * SQUARE_SIZE }, { static_cast<float>(screen_width) / 2 + i * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 - HALF_OF_SQUARES * SQUARE_SIZE }, LINE_THICKNESS, BLACK);
 		DrawLineEx( {static_cast<float>(screen_width) / 2 + HALF_OF_SQUARES * SQUARE_SIZE, static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE }, { static_cast<float>(screen_width) / 2 - HALF_OF_SQUARES * SQUARE_SIZE,  static_cast<float>(screen_height) / 2 + i * SQUARE_SIZE }, LINE_THICKNESS, BLACK);
@@ -303,13 +285,13 @@ void Board::drawPassButton()
 	DrawTextEx(GetFontDefault(), "PASS", { (static_cast<float>(screen_width) - BUTTON_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) + HALF_OF_SQUARES * 2 * SQUARE_SIZE + SQUARE_SIZE + BUTTON_TEXT_Y_OFFSET) / 2 }, BASE_TEXT_SIZE, FEATURES_SPACING, BEIGE);
 }
 
-void Board::evaluateScore()
+void Board::evaluateScore() //Evaluate score under Chinese rules. All groups that are "intuitively dead" have to be removed via play.
 {
 	if (!m_scoreEvaluated)
 	{
 		std::array<std::array<int, NUMBER_OF_SQUARES>, NUMBER_OF_SQUARES> timesChecked{};
 
-		std::queue<std::pair<int, int>> toBeSearched;
+		std::queue<std::pair<int, int>> toBeSearched{};
 
 		//Iterate through Board to check if territories are fully controlled (non-neutral) by one player
 		for (int row{ 0 }; row < NUMBER_OF_SQUARES; ++row)
@@ -410,8 +392,6 @@ void Board::evaluateScore()
 			}
 		}
 
-		std::cout << ((m_score > 0) ? "Black" : "White") << " wins by " << ((m_score > 0) ? m_score : -m_score) << " points!\n";
-
 		m_scoreEvaluated = true;
 	}
 }
@@ -429,9 +409,9 @@ void Board::checkPlayAgainOrExit()
 			mousePos.y < (static_cast<float>(screen_height) + PA_FEATURES_Y_OFFSET + PA_BUTTON_HEIGHT * 2) / 2)
 		{
 			//Reset the board
-			for (int i{}; i < NUMBER_OF_SQUARES; ++i)
+			for (int i{ 0 }; i < NUMBER_OF_SQUARES; ++i)
 			{
-				for (int j{}; j < NUMBER_OF_SQUARES; ++j)
+				for (int j{ 0 }; j < NUMBER_OF_SQUARES; ++j)
 				{
 					this->m_board[i][j] = 0;
 				}
@@ -448,8 +428,6 @@ void Board::checkPlayAgainOrExit()
 
 void Board::drawGameEndPopup()
 {
-	//DrawRectangle((screen_width - PA_POPUP_WIDTH) / 2, (screen_height - PA_POPUP_HEIGHT) / 2, PA_POPUP_WIDTH, PA_POPUP_HEIGHT, BROWN);
-
 	DrawRectangle((screen_width - PA_BUTTON_WIDTH) / 2, (screen_height + PA_FEATURES_Y_OFFSET) / 2, PA_BUTTON_WIDTH, PA_BUTTON_HEIGHT, DARKBROWN);
 
 	DrawTextEx(GetFontDefault(), (this->m_score > 0) ? ("Black Wins") : ("White Wins"), { (static_cast<float>(screen_width) - PA_TEXT_X_OFFSET) / 2, (static_cast<float>(screen_height) - PA_FEATURES_Y_OFFSET - PA_BUTTON_HEIGHT) / 2 }, BASE_TEXT_SIZE * 2, FEATURES_SPACING, ((this->m_score > 0) ? BLACK : WHITE));
