@@ -11,5 +11,4 @@ A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in th
 
 ## ✨Plans
 - Add app icon.
-- Clean the code.
 - Add .exe file.
