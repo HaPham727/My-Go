@@ -12,3 +12,8 @@ A WIP, light-weight game simulator for Go/Weiqi/Baduk/Cờ Vây programmed in th
 ## ✨Plans
 - Add app icon.
 - Add .exe file.
+
+## 🖥️How to Run
+- Download [Visual Studio](https://visualstudio.microsoft.com).
+- Open My-Go.sln with Visual Studio.
+- Press Ctrl + F5 to run.
